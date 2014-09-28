@@ -4,5 +4,12 @@ lib/
 .project
 .settings/*
 /.settings
+<<<<<<< HEAD
 target/*
 *.class
+=======
+/target/
+
+target/*
+/target/*
+>>>>>>> 680fc927bc5fa3742d0f211d34dfef3bf67f0fe2
