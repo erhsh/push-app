@@ -1,14 +1,14 @@
 package com.blackcrystalinfo.push;
 
+import com.blackcrystalinfo.push.data.IData;
+import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData;
 import com.blackcrystalinfo.push.message.SendMessage;
-import com.blackcrystalinfo.push.msg.IMessage;
-import com.blackcrystalinfo.push.msg.push.impl.BaiduPushMessage;
-import com.blackcrystalinfo.push.send.IMsgSend;
-import com.blackcrystalinfo.push.send.push.impl.BaiduPushMsgSend;
+import com.blackcrystalinfo.push.pusher.IPusher;
+import com.blackcrystalinfo.push.pusher.msg.impl.BaiduMsgPusher;
 
 public class MsgSendService {
 
-	private IMsgSend sender;
+	private IPusher sender;
 
 	private boolean isBadu = true;
 
@@ -18,15 +18,15 @@ public class MsgSendService {
 
 	private void init() {
 		if (isBadu) {
-			sender = new BaiduPushMsgSend();
+			sender = new BaiduMsgPusher();
 		}
 	}
 
 	public void send(SendMessage pushMsg) {
 
-		IMessage msg = null;
+		IData msg = null;
 		if (isBadu) {
-			BaiduPushMessage baiduPusMsg = new BaiduPushMessage();
+			BaiduMsgData baiduPusMsg = new BaiduMsgData();
 			baiduPusMsg.setDeviceType(3);
 			baiduPusMsg.setChannelId(4334295471091639679L);
 			baiduPusMsg.setUserId("763093826355642008");

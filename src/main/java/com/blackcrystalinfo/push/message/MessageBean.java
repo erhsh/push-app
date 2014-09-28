@@ -5,53 +5,48 @@ import java.util.List;
 import java.util.Random;
 
 public class MessageBean {
-	private String id;
+	private String msgId;
 
-	private String name;
+	private Object msgData;
 
-	public String getId() {
-		return id;
+	public String getMsgId() {
+		return msgId;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setMsgId(String msgId) {
+		this.msgId = msgId;
 	}
 
-	public String getName() {
-		return name;
+	public Object getMsgData() {
+		return msgData;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setMsgData(Object msgData) {
+		this.msgData = msgData;
 	}
 
 	@Override
 	public String toString() {
-		return "MessageBean [id=" + id + ", name=" + name + "]";
+		return "MessageBean [msgId=" + msgId + ", msgData=" + msgData + "]";
 	}
 
 	public static List<MessageBean> mock() {
 		List<MessageBean> result = new ArrayList<MessageBean>();
 
 		MessageBean mb1 = new MessageBean();
-		mb1.setId("1");
-		mb1.setName("Over Temperature");
+		mb1.setMsgId("1");
+		mb1.setMsgData("Status Changed Data");
 		result.add(mb1);
 
 		MessageBean mb2 = new MessageBean();
-		mb2.setId("2");
-		mb2.setName("Over Pressure");
+		mb2.setMsgId("2");
+		mb2.setMsgData("Device Alarm Data");
 		result.add(mb2);
 
 		MessageBean mb3 = new MessageBean();
-		mb3.setId("3");
-		mb3.setName("Find Inbreak");
+		mb3.setMsgId("3");
+		mb3.setMsgData("Other Data");
 		result.add(mb3);
-
-		MessageBean mb4 = new MessageBean();
-		mb4.setId("4");
-		mb4.setName("Change State");
-		result.add(mb4);
 
 		return result;
 	}
