@@ -1,15 +1,21 @@
 package com.blackcrystalinfo.push.collector;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.blackcrystalinfo.push.MsgSendService;
+import com.blackcrystalinfo.push.exception.ReceiveException;
 import com.blackcrystalinfo.push.message.MessageBean;
+import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.AlarmMsgParser;
 import com.blackcrystalinfo.push.parser.IMsgParser;
+import com.blackcrystalinfo.push.service.APushService;
+import com.blackcrystalinfo.push.service.MsgPushService;
+import com.blackcrystalinfo.push.service.SmsPushService;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -21,10 +27,8 @@ public class MsgCollector {
 	private static final Logger logger = LoggerFactory
 			.getLogger(MsgCollector.class);
 
-	private Connection connection;
-
-	private static final String AMQ_ADDR = "182.92.130.242";
-	// private static final String AMQ_ADDR = "123.57.13.71";
+	// private static final String AMQ_ADDR = "182.92.130.242";
+	private static final String AMQ_ADDR = "123.57.13.71";
 
 	private static final int AMQ_PORT = 5672;
 	private static final String AMQ_USER = "test";
@@ -32,23 +36,22 @@ public class MsgCollector {
 
 	private static final String EXCHANGE_NAME = "MsgTopic";
 
-	private MsgSendService service;
+	private Map<MsgPushTypeEnum, APushService> serviceMap;
 
 	private IMsgParser parser;
 
-	public MsgCollector() throws IOException {
-		init();
-	}
-
-	private void init() throws IOException {
+	public MsgCollector() {
 		//
-		service = new MsgSendService();
+		serviceMap = new HashMap<MsgPushTypeEnum, APushService>();
+
+		serviceMap.put(MsgPushTypeEnum.MSG, new MsgPushService("baidu"));
+		serviceMap.put(MsgPushTypeEnum.SMS, new SmsPushService("haha"));
 
 		parser = new AlarmMsgParser();
 	}
 
-	public void collect() {
-		logger.info("start collect data from msg queue");
+	public void start() {
+		logger.info("Start collect data from msg queue");
 
 		Connection connection = null;
 		try {
@@ -71,26 +74,23 @@ public class MsgCollector {
 			channel.queueBind(queueName, EXCHANGE_NAME, routingKey_reg);
 			QueueingConsumer consumer = new QueueingConsumer(channel);
 			channel.basicConsume(queueName, true, consumer);
-			
+
 			// 3. 消费消息
 			while (true) {
-				
 				// 3.1. 接收消息
 				MessageBean mb = receive(consumer);
-				if (null == mb) {
-					continue;
-				}
-				
+				logger.info("Receive data : " + mb);
+
 				// 3.2. 解析消息
 				SendMessage sm = parser.parse(mb);
 				logger.info("Parse to: " + sm);
 
 				// 3.3. 推送消息
-				service.send(sm);
-				logger.info("Send Ok~~~");
+				send(sm);
+
 			}
 		} catch (IOException e) {
-			logger.error("Collect Exception, e=" + e);
+			logger.error("Start collect error, msg : " + e.getMessage(), e);
 		} finally {
 			if (null != connection) {
 				try {
@@ -111,23 +111,33 @@ public class MsgCollector {
 			delivery = consumer.nextDelivery();
 
 			String routingKey = delivery.getEnvelope().getRoutingKey();
-
 			byte[] bs = delivery.getBody();
 
 			result = new MessageBean();
 			result.setMsgId(routingKey);
-			result.setMsgData(bs);
-			String message = new String(bs);
-			logger.info(" [x] Received '" + routingKey + "':'" + message + "'");
+			result.setMsgData(new String(bs));
 		} catch (ShutdownSignalException e) {
-			e.printStackTrace();
+			throw new ReceiveException("ShutdownSignalException", e);
 		} catch (ConsumerCancelledException e) {
-			e.printStackTrace();
+			throw new ReceiveException("ConsumerCancelledException", e);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			throw new ReceiveException("InterruptedException", e);
 		}
 
 		return result;
+	}
+
+	private void send(SendMessage sm) {
+		APushService service = serviceMap.get(sm.getType());
+
+		if (null == service) {
+			logger.warn("Unsurport MsgPushType : {}", sm.getType());
+			return;
+		}
+
+		service.push(sm);
+
+		logger.info("Send Ok~~~ \n");
 	}
 
 }

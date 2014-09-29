@@ -6,12 +6,12 @@ import com.blackcrystalinfo.push.pusher.IPusher;
 
 public abstract class ASmsPusher implements IPusher {
 	@Override
-	public void send(IData msg) {
-		if (msg instanceof ASmsData) {
-			ASmsData smsMsg = (ASmsData) msg;
-			sms(smsMsg);
+	public void push(IData data) {
+		if (data instanceof ASmsData) {
+			ASmsData smsData = (ASmsData) data;
+			pushSms(smsData);
 		}
 	}
 
-	protected abstract void sms(ASmsData smsMsg);
+	protected abstract void pushSms(ASmsData smsData);
 }

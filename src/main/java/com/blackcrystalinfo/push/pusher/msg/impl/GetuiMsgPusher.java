@@ -6,7 +6,7 @@ import com.blackcrystalinfo.push.pusher.msg.AMsgPusher;
 public class GetuiMsgPusher extends AMsgPusher {
 
 	@Override
-	protected void push(AMsgData pushMsg) {
+	protected void pushMsg(AMsgData msgData) {
 		// TODO Auto-generated method stub
 
 	}

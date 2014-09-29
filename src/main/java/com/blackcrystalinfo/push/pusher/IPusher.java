@@ -9,5 +9,5 @@ import com.blackcrystalinfo.push.data.IData;
  *
  */
 public interface IPusher {
-	void send(IData msg);
+	void push(IData data);
 }

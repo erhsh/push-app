@@ -13,12 +13,12 @@ import com.blackcrystalinfo.push.pusher.IPusher;
 public abstract class AMsgPusher implements IPusher {
 
 	@Override
-	public void send(IData msg) {
-		if (msg instanceof AMsgData) {
-			AMsgData pushMsg = (AMsgData) msg;
-			push(pushMsg);
+	public void push(IData data) {
+		if (data instanceof AMsgData) {
+			AMsgData msgData = (AMsgData) data;
+			pushMsg(msgData);
 		}
 	}
 
-	protected abstract void push(AMsgData pushMsg);
+	protected abstract void pushMsg(AMsgData msgData);
 }

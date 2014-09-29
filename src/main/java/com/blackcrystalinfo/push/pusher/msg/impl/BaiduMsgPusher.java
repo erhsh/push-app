@@ -32,19 +32,18 @@ public class BaiduMsgPusher extends AMsgPusher {
 	}
 
 	@Override
-	protected void push(AMsgData pushMsg) {
-
-		if (pushMsg instanceof BaiduMsgData) {
-			BaiduMsgData baiduPushMsg = (BaiduMsgData) pushMsg;
+	protected void pushMsg(AMsgData msgData) {
+		if (msgData instanceof BaiduMsgData) {
+			BaiduMsgData baiduMsgData = (BaiduMsgData) msgData;
 
 			try {
 				// 创建请求类对象
 				PushUnicastMessageRequest request = new PushUnicastMessageRequest();
-				request.setDeviceType(baiduPushMsg.getDeviceType());
-				request.setChannelId(baiduPushMsg.getChannelId());
-				request.setUserId(baiduPushMsg.getUserId());
-				request.setMessageType(baiduPushMsg.getMessageType());
-				request.setMessage(baiduPushMsg.getMessage());
+				request.setDeviceType(baiduMsgData.getDeviceType());
+				request.setChannelId(baiduMsgData.getChannelId());
+				request.setUserId(baiduMsgData.getUserId());
+				request.setMessageType(baiduMsgData.getMessageType());
+				request.setMessage(baiduMsgData.getMessage());
 
 				// 调用pushMessage接口
 				PushUnicastMessageResponse response = channelClient

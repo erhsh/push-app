@@ -2,7 +2,7 @@ package com.blackcrystalinfo.push.message;
 
 public enum MsgPushTypeEnum {
 	// 通知消息
-	NOTIFICATION,
+	MSG,
 
 	// 短信通知
 	SMS,

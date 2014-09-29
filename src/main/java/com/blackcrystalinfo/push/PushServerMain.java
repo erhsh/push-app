@@ -1,7 +1,5 @@
 package com.blackcrystalinfo.push;
 
-import java.io.IOException;
-
 import com.blackcrystalinfo.push.collector.MsgCollector;
 
 public class PushServerMain {
@@ -10,8 +8,8 @@ public class PushServerMain {
 		MsgCollector collector;
 		try {
 			collector = new MsgCollector();
-			collector.collect();
-		} catch (IOException e) {
+			collector.start();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

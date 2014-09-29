@@ -68,7 +68,7 @@ public class SendMessage {
 		sm1.setTarget("dev001");
 		sm1.setTitle("Title:Over Temperature");
 		sm1.setContent("Content:template content here");
-		sm1.setType(MsgPushTypeEnum.NOTIFICATION);
+		sm1.setType(MsgPushTypeEnum.MSG);
 		result.add(sm1);
 
 		SendMessage sm2 = new SendMessage();
@@ -88,7 +88,7 @@ public class SendMessage {
 		return result;
 
 	}
-	
+
 	public static void main(String[] args) {
 		for (SendMessage sm : mock()) {
 			System.out.println(sm);
