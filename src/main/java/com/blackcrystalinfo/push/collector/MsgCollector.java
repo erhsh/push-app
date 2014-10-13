@@ -1,21 +1,12 @@
 package com.blackcrystalinfo.push.collector;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.blackcrystalinfo.push.exception.ReceiveException;
 import com.blackcrystalinfo.push.message.MessageBean;
-import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
-import com.blackcrystalinfo.push.message.SendMessage;
-import com.blackcrystalinfo.push.parser.AlarmMsgParser;
-import com.blackcrystalinfo.push.parser.IMsgParser;
-import com.blackcrystalinfo.push.service.APushService;
-import com.blackcrystalinfo.push.service.MsgPushService;
-import com.blackcrystalinfo.push.service.SmsPushService;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -36,24 +27,15 @@ public class MsgCollector {
 
 	private static final String EXCHANGE_NAME = "MsgTopic";
 
-	private Map<MsgPushTypeEnum, APushService> serviceMap;
+	private QueueingConsumer consumer;
 
-	private IMsgParser parser;
+	private Connection connection;
 
 	public MsgCollector() {
-		//
-		serviceMap = new HashMap<MsgPushTypeEnum, APushService>();
-
-		serviceMap.put(MsgPushTypeEnum.MSG, new MsgPushService("baidu"));
-		serviceMap.put(MsgPushTypeEnum.SMS, new SmsPushService("haha"));
-
-		parser = new AlarmMsgParser();
+		start();
 	}
 
 	public void start() {
-		logger.info("Start collect data from msg queue");
-
-		Connection connection = null;
 		try {
 			// 1. 建立连接
 			ConnectionFactory factory = new ConnectionFactory();
@@ -72,42 +54,27 @@ public class MsgCollector {
 			String queueName = channel.queueDeclare().getQueue();
 			String routingKey_reg = "4";
 			channel.queueBind(queueName, EXCHANGE_NAME, routingKey_reg);
-			QueueingConsumer consumer = new QueueingConsumer(channel);
+			consumer = new QueueingConsumer(channel);
 			channel.basicConsume(queueName, true, consumer);
 
-			// 3. 消费消息
-			while (true) {
-				// 3.1. 接收消息
-				MessageBean mb = receive(consumer);
-				logger.info("Receive data : " + mb);
-
-				// 3.2. 解析消息
-				SendMessage sm = parser.parse(mb);
-				logger.info("Parse to: " + sm);
-
-				// 3.3. 推送消息
-				send(sm);
-
-			}
 		} catch (IOException e) {
-			logger.error("Start collect error, msg : " + e.getMessage(), e);
-		} finally {
-			if (null != connection) {
-				try {
-					connection.close();
-				} catch (IOException e) {
-					logger.error("Close connection exception, e=" + e);
-				}
-			}
+			logger.error("Start collect error!!! msg = {}", e.getMessage());
+			throw new ReceiveException("Start collect error", e);
 		}
 
 	}
 
-	private MessageBean receive(QueueingConsumer consumer) {
+	public MessageBean receive() {
 		MessageBean result = null;
 
 		QueueingConsumer.Delivery delivery;
 		try {
+			if (null == consumer) {
+				logger.error("Rabbit MQ's consumer is null");
+				Thread.sleep(1000);
+				return result;
+			}
+
 			delivery = consumer.nextDelivery();
 
 			String routingKey = delivery.getEnvelope().getRoutingKey();
@@ -117,27 +84,23 @@ public class MsgCollector {
 			result.setMsgId(routingKey);
 			result.setMsgData(new String(bs));
 		} catch (ShutdownSignalException e) {
-			throw new ReceiveException("ShutdownSignalException", e);
+			logger.error("Shutdown Signal Exception", e);
 		} catch (ConsumerCancelledException e) {
-			throw new ReceiveException("ConsumerCancelledException", e);
+			logger.error("Consumer Cancelled Exception", e);
 		} catch (InterruptedException e) {
-			throw new ReceiveException("InterruptedException", e);
+			logger.error("Interrupted Exception", e);
 		}
 
 		return result;
 	}
 
-	private void send(SendMessage sm) {
-		APushService service = serviceMap.get(sm.getType());
-
-		if (null == service) {
-			logger.warn("Unsurport MsgPushType : {}", sm.getType());
-			return;
+	public void close() {
+		if (null != connection) {
+			try {
+				connection.close();
+			} catch (IOException e) {
+				logger.error("Close connection exception, e=" + e);
+			}
 		}
-
-		service.push(sm);
-
-		logger.info("Send Ok~~~ \n");
 	}
-
 }

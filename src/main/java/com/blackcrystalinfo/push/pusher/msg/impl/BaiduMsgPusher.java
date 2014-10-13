@@ -54,10 +54,10 @@ public class BaiduMsgPusher extends AMsgPusher {
 
 			} catch (ChannelClientException e) {
 				// 处理客户端错误异常
-				e.printStackTrace();
+				logger.error("Channel Client Exception", e);
 			} catch (ChannelServerException e) {
 				// 处理服务端错误异常
-				System.out.println(String.format(
+				logger.error(String.format(
 						"request_id: %d, error_code: %d, error_message: %s",
 						e.getRequestId(), e.getErrorCode(), e.getErrorMsg()));
 			}

@@ -6,3 +6,4 @@ lib/
 /.settings
 target/*
 *.class
+/target
