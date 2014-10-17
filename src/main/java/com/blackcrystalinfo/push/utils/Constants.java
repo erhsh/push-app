@@ -10,6 +10,12 @@ public class Constants extends ConfigurableConstants {
 
 	public static String SECRET_KEY = getProperty("secretKey", "");
 
+	public static String REDIS_HOST = getProperty("redis.host", "");
+
+	public static String REDIS_PORT = getProperty("redis.port", "");
+
+	public static String REDIS_PASS = getProperty("redis.pass", "");
+
 	public static String getProperty(String key, String defaultValue) {
 		return p.getProperty(key, defaultValue);
 	}
@@ -17,7 +23,11 @@ public class Constants extends ConfigurableConstants {
 	public static void main(String[] args) {
 		System.out.println(Constants.API_KEY);
 		System.out.println(Constants.SECRET_KEY);
-		
+
+		System.out.println(Constants.REDIS_HOST);
+		System.out.println(Constants.REDIS_PORT);
+		System.out.println(Constants.REDIS_PASS);
+
 		System.out.println(System.getProperty("user.dir"));
 	}
 }

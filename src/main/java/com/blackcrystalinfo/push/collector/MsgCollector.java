@@ -18,12 +18,20 @@ public class MsgCollector {
 	private static final Logger logger = LoggerFactory
 			.getLogger(MsgCollector.class);
 
-	// private static final String AMQ_ADDR = "182.92.130.242";
-	private static final String AMQ_ADDR = "123.57.13.71";
-
+// private static final String AMQ_ADDR = "182.92.130.242";
+//	private static final int AMQ_PORT = 5672;
+//	private static final String AMQ_USER = "test";
+//	private static final String AMQ_PASS = "test123";
+	
+//	private static final String AMQ_ADDR = "123.57.13.71";
+//	private static final int AMQ_PORT = 5672;
+//	private static final String AMQ_USER = "test";
+//	private static final String AMQ_PASS = "test123";
+	
+	private static final String AMQ_ADDR = "192.168.2.225";
 	private static final int AMQ_PORT = 5672;
-	private static final String AMQ_USER = "test";
-	private static final String AMQ_PASS = "test123";
+	private static final String AMQ_USER = "guest";
+	private static final String AMQ_PASS = "guest";	
 
 	private static final String EXCHANGE_NAME = "MsgTopic";
 
@@ -52,7 +60,7 @@ public class MsgCollector {
 			channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, false, false,
 					null);
 			String queueName = channel.queueDeclare().getQueue();
-			String routingKey_reg = "4";
+			String routingKey_reg = "5";
 			channel.queueBind(queueName, EXCHANGE_NAME, routingKey_reg);
 			consumer = new QueueingConsumer(channel);
 			channel.basicConsume(queueName, true, consumer);
@@ -82,9 +90,9 @@ public class MsgCollector {
 
 			result = new MessageBean();
 			result.setMsgId(routingKey);
-			result.setMsgData(new String(bs));
+			result.setMsgData(bs);
 		} catch (ShutdownSignalException e) {
-			logger.error("Shutdown Signal Exception", e);
+			logger.warn("Shutdown Signal Exception e={}", e.getMessage());
 		} catch (ConsumerCancelledException e) {
 			logger.error("Consumer Cancelled Exception", e);
 		} catch (InterruptedException e) {
