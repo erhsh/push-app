@@ -1,5 +1,6 @@
 package com.blackcrystalinfo.push.service;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.AlarmMsgParser;
 import com.blackcrystalinfo.push.parser.IMsgParser;
+import com.blackcrystalinfo.push.utils.FileUitls;
 
 public class PushService implements IService {
 
@@ -43,6 +45,14 @@ public class PushService implements IService {
 
 	@Override
 	public void startServcie() throws PushException {
+
+		logger.info("================Start Push Service===============");
+		try {
+			collector.connect();
+		} catch (IOException e) {
+			throw new PushException("Connect RMQ Server error!!!", e);
+		}
+
 		isStart = true;
 		while (isStart) {
 			// 1 collect
@@ -51,6 +61,9 @@ public class PushService implements IService {
 				continue;
 			}
 			logger.info("Received messageBean: {}", rawMsg);
+
+			FileUitls.write("d:/rmq_data/new2/" + rawMsg.getMsgId() + ""
+					+ System.currentTimeMillis(), (byte[]) rawMsg.getMsgData());
 
 			// 2 parse
 			List<SendMessage> msgs = parser.parse(rawMsg);

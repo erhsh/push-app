@@ -20,7 +20,6 @@ public class PushStartup {
 		try {
 			service = new PushService();
 			service.startServcie();
-
 		} catch (Exception e) {
 			logger.error("Start up push service error!!!", e);
 			if (null != service) {

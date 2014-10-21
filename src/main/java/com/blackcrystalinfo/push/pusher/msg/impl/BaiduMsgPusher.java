@@ -7,6 +7,10 @@ import com.baidu.yun.channel.auth.ChannelKeyPair;
 import com.baidu.yun.channel.client.BaiduChannelClient;
 import com.baidu.yun.channel.exception.ChannelClientException;
 import com.baidu.yun.channel.exception.ChannelServerException;
+import com.baidu.yun.channel.model.PushBroadcastMessageRequest;
+import com.baidu.yun.channel.model.PushBroadcastMessageResponse;
+import com.baidu.yun.channel.model.PushTagMessageRequest;
+import com.baidu.yun.channel.model.PushTagMessageResponse;
 import com.baidu.yun.channel.model.PushUnicastMessageRequest;
 import com.baidu.yun.channel.model.PushUnicastMessageResponse;
 import com.blackcrystalinfo.push.data.msg.AMsgData;
@@ -37,20 +41,21 @@ public class BaiduMsgPusher extends AMsgPusher {
 			BaiduMsgData baiduMsgData = (BaiduMsgData) msgData;
 
 			try {
-				// 创建请求类对象
-				PushUnicastMessageRequest request = new PushUnicastMessageRequest();
-				request.setDeviceType(baiduMsgData.getDeviceType());
-				request.setChannelId(baiduMsgData.getChannelId());
-				request.setUserId(baiduMsgData.getUserId());
-				request.setMessageType(baiduMsgData.getMessageType());
-				request.setMessage(baiduMsgData.getMessage());
 
-				// 调用pushMessage接口
-				PushUnicastMessageResponse response = channelClient
-						.pushUnicastMessage(request);
-
-				// 认证推送成功
-				logger.info("push amount : " + response.getSuccessAmount());
+				switch (baiduMsgData.getPushType()) {
+				case UNICAST:
+					pushUnicastMessage(baiduMsgData);
+					break;
+				case TAG:
+					pushTagMessage(baiduMsgData);
+					break;
+				case BROADCAST:
+					pushBroadcastMessage(baiduMsgData);
+					break;
+				default:
+					logger.error("Unsurpport MessageType {}, discard it.");
+					break;
+				}
 
 			} catch (ChannelClientException e) {
 				// 处理客户端错误异常
@@ -64,6 +69,67 @@ public class BaiduMsgPusher extends AMsgPusher {
 
 		}
 
+	}
+
+	private void pushUnicastMessage(BaiduMsgData baiduMsgData)
+			throws ChannelClientException, ChannelServerException {
+		// 创建请求类对象
+		PushUnicastMessageRequest request = new PushUnicastMessageRequest();
+		request.setUserId(baiduMsgData.getUserId());
+		request.setChannelId(baiduMsgData.getChannelId());
+		request.setMessage(baiduMsgData.getMessage());
+		request.setMessageType(baiduMsgData.getMessageType().getValue());
+		request.setDeviceType(baiduMsgData.getDeviceType().getValue());
+
+		// 调用pushMessage接口
+		logger.info(
+				"Push request >>>: uid={}, cid={}, msg={}, msgType={}, devType={}",
+				request.getUserId(), request.getChannelId(),
+				request.getMessage(), request.getMessageType(),
+				request.getDeviceType());
+
+		PushUnicastMessageResponse response = channelClient
+				.pushUnicastMessage(request);
+
+		logger.info("Push amount : " + response.getSuccessAmount());
+	}
+
+	private void pushTagMessage(BaiduMsgData baiduMsgData)
+			throws ChannelClientException, ChannelServerException {
+		// 创建请求类对象
+		PushTagMessageRequest request = new PushTagMessageRequest();
+		request.setTagName(baiduMsgData.getTag());
+		request.setMessage(baiduMsgData.getMessage());
+		request.setMessageType(baiduMsgData.getMessageType().getValue());
+		request.setDeviceType(baiduMsgData.getDeviceType().getValue());
+
+		// 调用pushMessage接口
+		logger.info("Push request >>>: tag={}, msg={}, msgType={}, devType={}",
+				request.getTagName(), request.getMessage(),
+				request.getMessageType(), request.getDeviceType());
+
+		PushTagMessageResponse response = channelClient.pushTagMessage(request);
+
+		logger.info("Push amount : " + response.getSuccessAmount());
+	}
+
+	private void pushBroadcastMessage(BaiduMsgData baiduMsgData)
+			throws ChannelClientException, ChannelServerException {
+		// 创建请求类对象
+		PushBroadcastMessageRequest request = new PushBroadcastMessageRequest();
+		request.setMessage(baiduMsgData.getMessage());
+		request.setMessageType(baiduMsgData.getMessageType().getValue());
+		request.setDeviceType(baiduMsgData.getDeviceType().getValue());
+
+		// 调用pushMessage接口
+		logger.info("Push request >>>:  msg={}, msgType={}, devType={}",
+				request.getMessage(), request.getMessageType(),
+				request.getDeviceType());
+
+		PushBroadcastMessageResponse response = channelClient
+				.pushBroadcastMessage(request);
+
+		logger.info("Push amount : " + response.getSuccessAmount());
 	}
 
 }

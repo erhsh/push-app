@@ -58,7 +58,7 @@ public class MyDecoder {
 	public static void main(String[] args) {
 		// new MyDecoder().decode("d:/rmq_data/new/3");
 		// new MyDecoder().decode("d:/rmq_data/new/4_1413361594445");
-		new MyDecoder().decode("d:/rmq_data/new/5_1413362888189");
+		new MyDecoder().decode("d:/rmq_data/new3/81413793474532");
 		// new MyDecoder().decode("d:/rmq_data/new/5_1413362888330");
 		// new MyDecoder().decode("d:/rmq_data/new/18");
 		// new MyDecoder().decode("d:/rmq_data/new/20");

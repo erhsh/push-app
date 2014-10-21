@@ -1,6 +1,9 @@
 package com.blackcrystalinfo.push.service;
 
 import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData;
+import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData.DeviceType;
+import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData.MessageType;
+import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData.PushType;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.pusher.msg.impl.BaiduMsgPusher;
 import com.blackcrystalinfo.push.pusher.msg.impl.GetuiMsgPusher;
@@ -27,13 +30,15 @@ public class MsgPushService extends APushService {
 
 		if ("Baidu".equalsIgnoreCase(providerName)) {
 			BaiduMsgData baiduMsgData = new BaiduMsgData();
-			baiduMsgData.setDeviceType(3);
-			baiduMsgData.setChannelId(4334295471091639679L);
-			baiduMsgData.setUserId("763093826355642008");
+			// baiduMsgData.setChannelId(4334295471091639679L);
+			// baiduMsgData.setUserId(msg.getTarget());
 
-			baiduMsgData.setMessageType(1);
+			baiduMsgData.setTag(msg.getTarget());
 			baiduMsgData.setMessage("{\"title\":\"" + msg.getTitle()
 					+ "\",\"description\":\"" + msg.getContent() + "\"}");
+			baiduMsgData.setMessageType(MessageType.NOTICE);
+			baiduMsgData.setDeviceType(DeviceType.ANDROID);
+			baiduMsgData.setPushType(PushType.TAG);
 
 			data = baiduMsgData;
 

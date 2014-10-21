@@ -18,6 +18,21 @@ public class AlarmMsgParser implements IMsgParser {
 			.getLogger(AlarmMsgParser.class);
 	private static final String DATA_PARSE_PASS = "";
 
+	private static List<AlarmUnit> aus;
+
+	static {
+		aus = new ArrayList<AlarmUnit>();
+
+		aus.add(new AlarmUnit(0, "过压"));
+		aus.add(new AlarmUnit(1, "过流"));
+		aus.add(new AlarmUnit(2, "漏电"));
+		aus.add(new AlarmUnit(3, "过温"));
+		aus.add(new AlarmUnit(4, "气体"));
+		aus.add(new AlarmUnit(5, "水侵"));
+		aus.add(new AlarmUnit(6, "光线"));
+		aus.add(new AlarmUnit(7, "红外"));
+	}
+
 	@Override
 	public List<SendMessage> parse(MessageBean rawMsg) {
 		List<SendMessage> result = new ArrayList<SendMessage>();
@@ -37,9 +52,11 @@ public class AlarmMsgParser implements IMsgParser {
 				logger.warn("Parse data abnormal, code={}", shdata.code);
 
 				SendMessage e = new SendMessage();
-				e.setTarget("xx");
-				e.setTitle("xx");
-				e.setContent("xx");
+				e.setTarget("763093826355642008");
+				e.setTarget("120");
+				e.setTitle("Data Abnormal");
+				e.setContent("Parse code is: " + shdata.code + " --"
+						+ rawMsg.getDateTime());
 				e.setType(MsgPushTypeEnum.MSG);
 				result.add(e);
 
@@ -49,17 +66,17 @@ public class AlarmMsgParser implements IMsgParser {
 			// alarm to who
 			List<String> bindUsers = getBindUsers(data);
 
-			// which is alarm
-			String alarmSrc = getAlarmSrc(data);
-
 			// alarm what info
 			String alarmInfo = getAlarmInfo(shdata);
+
+			// which is alarm
+			String alarmSrc = getAlarmSrc(data);
 
 			for (String bindUser : bindUsers) {
 				SendMessage sm = new SendMessage();
 				sm.setTarget(bindUser);
 				sm.setTitle(alarmInfo);
-				sm.setContent(alarmSrc);
+				sm.setContent(alarmSrc + "Time:" + rawMsg.getDateTime());
 				sm.setType(MsgPushTypeEnum.MSG);
 				result.add(sm);
 			}
@@ -73,7 +90,7 @@ public class AlarmMsgParser implements IMsgParser {
 		List<String> result = new ArrayList<String>();
 
 		// TODO: redis connect here
-		result.add("160");
+		result.add("120");
 
 		return result;
 	}
@@ -84,6 +101,33 @@ public class AlarmMsgParser implements IMsgParser {
 	}
 
 	private String getAlarmInfo(SmartHomeData shdata) {
-		return "红外|光线|水浸|气体|过温|漏电|过流|过压";
+		String result = "";
+		byte[] data = shdata.data;
+
+		if (null != data && data.length > 1) {
+			result = getAlarmInfo(data[0]);
+		}
+
+		return result;
+	}
+
+	private String getAlarmInfo(byte b) {
+		String result = "Alarm Info: ";
+
+		for (AlarmUnit au : aus) {
+
+			if ((b & au.getValue()) != 0) {
+				result += au.getName() + " ";
+			}
+		}
+
+		return result;
+	}
+
+	public static void main(String[] args) {
+		String info = new AlarmMsgParser()
+				.getAlarmInfo((byte) (1 | 4 | 8 | 128));
+
+		System.out.println(info);
 	}
 }
