@@ -15,6 +15,7 @@ import com.baidu.yun.channel.model.PushUnicastMessageRequest;
 import com.baidu.yun.channel.model.PushUnicastMessageResponse;
 import com.blackcrystalinfo.push.data.msg.AMsgData;
 import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData;
+import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData.DeviceType;
 import com.blackcrystalinfo.push.pusher.msg.AMsgPusher;
 import com.blackcrystalinfo.push.utils.Constants;
 
@@ -41,20 +42,41 @@ public class BaiduMsgPusher extends AMsgPusher {
 			BaiduMsgData baiduMsgData = (BaiduMsgData) msgData;
 
 			try {
-
-				switch (baiduMsgData.getPushType()) {
-				case UNICAST:
-					pushUnicastMessage(baiduMsgData);
-					break;
-				case TAG:
-					pushTagMessage(baiduMsgData);
-					break;
-				case BROADCAST:
-					pushBroadcastMessage(baiduMsgData);
-					break;
-				default:
-					logger.error("Unsurpport MessageType {}, discard it.");
-					break;
+				// 确定给哪种设备推送，默认给android，iOS推
+				DeviceType deviceType = baiduMsgData.getDeviceType();
+				if (null == deviceType) {
+					switch (baiduMsgData.getPushType()) {
+					case UNICAST:
+						pushUnicastMessage(baiduMsgData, DeviceType.ANDROID);
+						pushUnicastMessage(baiduMsgData, DeviceType.IOS);
+						break;
+					case TAG:
+						pushTagMessage(baiduMsgData, DeviceType.ANDROID);
+						pushTagMessage(baiduMsgData, DeviceType.IOS);
+						break;
+					case BROADCAST:
+						pushBroadcastMessage(baiduMsgData, DeviceType.ANDROID);
+						pushBroadcastMessage(baiduMsgData, DeviceType.IOS);
+						break;
+					default:
+						logger.error("Unsurpport MessageType {}, discard it.");
+						break;
+					}
+				} else {
+					switch (baiduMsgData.getPushType()) {
+					case UNICAST:
+						pushUnicastMessage(baiduMsgData, deviceType);
+						break;
+					case TAG:
+						pushTagMessage(baiduMsgData, deviceType);
+						break;
+					case BROADCAST:
+						pushBroadcastMessage(baiduMsgData, deviceType);
+						break;
+					default:
+						logger.error("Unsurpport MessageType {}, discard it.");
+						break;
+					}
 				}
 
 			} catch (ChannelClientException e) {
@@ -71,8 +93,9 @@ public class BaiduMsgPusher extends AMsgPusher {
 
 	}
 
-	private void pushUnicastMessage(BaiduMsgData baiduMsgData)
-			throws ChannelClientException, ChannelServerException {
+	private void pushUnicastMessage(BaiduMsgData baiduMsgData,
+			DeviceType deviceType) throws ChannelClientException,
+			ChannelServerException {
 		// 创建请求类对象
 		PushUnicastMessageRequest request = new PushUnicastMessageRequest();
 		request.setUserId(baiduMsgData.getUserId());
@@ -91,17 +114,18 @@ public class BaiduMsgPusher extends AMsgPusher {
 		PushUnicastMessageResponse response = channelClient
 				.pushUnicastMessage(request);
 
-		logger.info("Push amount : " + response.getSuccessAmount());
+		logger.info("Push amount <<<: " + response.getSuccessAmount());
 	}
 
-	private void pushTagMessage(BaiduMsgData baiduMsgData)
+	private void pushTagMessage(BaiduMsgData baiduMsgData, DeviceType deviceType)
 			throws ChannelClientException, ChannelServerException {
 		// 创建请求类对象
 		PushTagMessageRequest request = new PushTagMessageRequest();
 		request.setTagName(baiduMsgData.getTag());
 		request.setMessage(baiduMsgData.getMessage());
 		request.setMessageType(baiduMsgData.getMessageType().getValue());
-		request.setDeviceType(baiduMsgData.getDeviceType().getValue());
+		request.setDeviceType(deviceType.getValue());
+		request.setDeployStatus(baiduMsgData.getDeployStatus());
 
 		// 调用pushMessage接口
 		logger.info("Push request >>>: tag={}, msg={}, msgType={}, devType={}",
@@ -110,16 +134,17 @@ public class BaiduMsgPusher extends AMsgPusher {
 
 		PushTagMessageResponse response = channelClient.pushTagMessage(request);
 
-		logger.info("Push amount : " + response.getSuccessAmount());
+		logger.info("Push amount <<<: " + response.getSuccessAmount());
 	}
 
-	private void pushBroadcastMessage(BaiduMsgData baiduMsgData)
-			throws ChannelClientException, ChannelServerException {
+	private void pushBroadcastMessage(BaiduMsgData baiduMsgData,
+			DeviceType deviceType) throws ChannelClientException,
+			ChannelServerException {
 		// 创建请求类对象
 		PushBroadcastMessageRequest request = new PushBroadcastMessageRequest();
 		request.setMessage(baiduMsgData.getMessage());
 		request.setMessageType(baiduMsgData.getMessageType().getValue());
-		request.setDeviceType(baiduMsgData.getDeviceType().getValue());
+		request.setDeviceType(deviceType.getValue());
 
 		// 调用pushMessage接口
 		logger.info("Push request >>>:  msg={}, msgType={}, devType={}",
@@ -129,7 +154,7 @@ public class BaiduMsgPusher extends AMsgPusher {
 		PushBroadcastMessageResponse response = channelClient
 				.pushBroadcastMessage(request);
 
-		logger.info("Push amount : " + response.getSuccessAmount());
+		logger.info("Push amount <<<: " + response.getSuccessAmount());
 	}
 
 }

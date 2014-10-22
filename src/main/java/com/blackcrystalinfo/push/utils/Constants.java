@@ -17,6 +17,7 @@ public class Constants extends ConfigurableConstants {
 
 	public static String API_KEY = getProperty("apiKey", "");
 	public static String SECRET_KEY = getProperty("secretKey", "");
+	public static String DEPLOY_STATUS = getProperty("deployStatus", "1");
 
 	public static String REDIS_HOST = getProperty("redis.host", "");
 	public static String REDIS_PORT = getProperty("redis.port", "");
@@ -34,6 +35,7 @@ public class Constants extends ConfigurableConstants {
 
 		System.out.println(Constants.API_KEY);
 		System.out.println(Constants.SECRET_KEY);
+		System.out.println(Constants.DEPLOY_STATUS);
 
 		System.out.println(Constants.REDIS_HOST);
 		System.out.println(Constants.REDIS_PORT);

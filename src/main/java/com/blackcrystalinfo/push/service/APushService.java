@@ -9,8 +9,6 @@ public abstract class APushService {
 
 	protected IPusher pusher;
 
-	protected IData data;
-
 	public APushService(String providerName) {
 		this.providerName = providerName;
 
@@ -18,13 +16,13 @@ public abstract class APushService {
 	}
 
 	public void push(SendMessage msg) {
-		initData(msg);
+		IData data = buildData(msg);
 
 		pusher.push(data);
 	}
 
 	protected abstract void initProvider();
 
-	protected abstract void initData(SendMessage msg);
+	protected abstract IData buildData(SendMessage msg);
 
 }

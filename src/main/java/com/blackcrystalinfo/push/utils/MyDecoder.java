@@ -23,10 +23,7 @@ public class MyDecoder {
 				return;
 			}
 
-			byte[] parseData = new byte[length - 20];
-			for (int i = 0; i < parseData.length; i++) {
-				parseData[i] = data[i + 20];
-			}
+			byte[] parseData = SmartHomeHead.subWebsocketHead(data);
 
 			SmartHomeData shd = SmartHomeHead.parseData(parseData, passwd);
 			System.out.println("lenght: " + parseData.length);

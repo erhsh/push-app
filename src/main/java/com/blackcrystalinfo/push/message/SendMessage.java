@@ -18,6 +18,8 @@ public class SendMessage {
 
 	private String content;
 
+	private String time;
+
 	private MsgPushTypeEnum type;
 
 	public String getTarget() {
@@ -42,6 +44,14 @@ public class SendMessage {
 
 	public void setContent(String content) {
 		this.content = content;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
 	}
 
 	public MsgPushTypeEnum getType() {

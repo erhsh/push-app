@@ -6,12 +6,21 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import redis.clients.jedis.Jedis;
+
+import com.blackcrystalinfo.push.dao.DataHelper;
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeData;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeHead;
 
+/**
+ * 报警消息解析器
+ * 
+ * @author j
+ * 
+ */
 public class AlarmMsgParser implements IMsgParser {
 
 	private static final Logger logger = LoggerFactory
@@ -37,12 +46,10 @@ public class AlarmMsgParser implements IMsgParser {
 	public List<SendMessage> parse(MessageBean rawMsg) {
 		List<SendMessage> result = new ArrayList<SendMessage>();
 
-		Object msgData = rawMsg.getMsgData();
+		byte[] msgData = rawMsg.getMsgData();
 
-		if (msgData instanceof byte[]) {
-			byte[] wsData = (byte[]) msgData;
-
-			byte[] data = SmartHomeHead.subWebsocketHead(wsData);
+		if (null != msgData) {
+			byte[] data = SmartHomeHead.subWebsocketHead(msgData);
 			SmartHomeData shdata = SmartHomeHead.parseData(data,
 					DATA_PARSE_PASS);
 
@@ -52,7 +59,6 @@ public class AlarmMsgParser implements IMsgParser {
 				logger.warn("Parse data abnormal, code={}", shdata.code);
 
 				SendMessage e = new SendMessage();
-				e.setTarget("763093826355642008");
 				e.setTarget("120");
 				e.setTitle("Data Abnormal");
 				e.setContent("Parse code is: " + shdata.code + " --"
@@ -63,20 +69,32 @@ public class AlarmMsgParser implements IMsgParser {
 				return result;
 			}
 
-			// alarm to who
-			List<String> bindUsers = getBindUsers(data);
-
-			// alarm what info
-			String alarmInfo = getAlarmInfo(shdata);
+			// get device id
+			String devId = parseDevId(data);
+			if (null == devId || "".equals(devId)) {
+				String devMac = String.valueOf(shdata.mac);
+				devId = getDevId(devMac);
+			}
 
 			// which is alarm
-			String alarmSrc = getAlarmSrc(data);
+			String devName = getDevName(devId);
+
+			// alarm what info
+			String alarmInfo = "";
+			byte[] alarmData = shdata.data;
+			if (null != data && data.length > 1) {
+				alarmInfo = getAlarmInfo(alarmData[0]);
+			}
+
+			// alarm to who
+			List<String> bindUsers = getBindUsers(devId);
 
 			for (String bindUser : bindUsers) {
 				SendMessage sm = new SendMessage();
 				sm.setTarget(bindUser);
 				sm.setTitle(alarmInfo);
-				sm.setContent(alarmSrc + "Time:" + rawMsg.getDateTime());
+				sm.setContent(devName + " Time: " + rawMsg.getDateTime());
+				sm.setTime(rawMsg.getDateTime());
 				sm.setType(MsgPushTypeEnum.MSG);
 				result.add(sm);
 			}
@@ -86,36 +104,67 @@ public class AlarmMsgParser implements IMsgParser {
 		return result;
 	}
 
-	private List<String> getBindUsers(byte[] data) {
-		List<String> result = new ArrayList<String>();
+	/**
+	 * 解析设备Id
+	 * 
+	 * @param data
+	 *            报警数据
+	 * @return 报警设备id
+	 */
+	private String parseDevId(byte[] data) {
 
-		// TODO: redis connect here
-		result.add("120");
-
-		return result;
-	}
-
-	private String getAlarmSrc(byte[] data) {
-		// TODO Auto-generated method stub
-		return "###Plug-14###";
-	}
-
-	private String getAlarmInfo(SmartHomeData shdata) {
 		String result = "";
-		byte[] data = shdata.data;
 
-		if (null != data && data.length > 1) {
-			result = getAlarmInfo(data[0]);
-		}
+		// TODO: 从前20字节里取？
 
 		return result;
 	}
 
+	/**
+	 * 根据mac地址，查找设备id
+	 * 
+	 * @param devMac
+	 *            设备mac
+	 * @return 设备id
+	 */
+	private String getDevId(String devMac) {
+		String result = "";
+
+		// TODO: find id by mac
+		Jedis jedis = DataHelper.getJedis();
+		result = jedis.hget("device:mactoid", devMac);
+
+		return result;
+	}
+
+	/**
+	 * 获取报警设备的名称
+	 * 
+	 * @param devId
+	 *            设备id
+	 * @return 设备名称
+	 */
+	private String getDevName(String devId) {
+		String result = "";
+
+		// TODO: find name by id
+		Jedis jedis = DataHelper.getJedis();
+		result = jedis.hget("device:idtoname", devId);
+
+		return result;
+	}
+
+	/**
+	 * 解析报警数据
+	 * 
+	 * @param b
+	 *            标志报警类型的一个字节
+	 * @return 组合的报警信息
+	 */
 	private String getAlarmInfo(byte b) {
 		String result = "Alarm Info: ";
 
 		for (AlarmUnit au : aus) {
-
 			if ((b & au.getValue()) != 0) {
 				result += au.getName() + " ";
 			}
@@ -124,10 +173,18 @@ public class AlarmMsgParser implements IMsgParser {
 		return result;
 	}
 
-	public static void main(String[] args) {
-		String info = new AlarmMsgParser()
-				.getAlarmInfo((byte) (1 | 4 | 8 | 128));
+	/**
+	 * 获取绑定用户列表
+	 * 
+	 * @param devId
+	 *            报警设备id
+	 * @return 绑定用户列表
+	 */
+	private List<String> getBindUsers(String devId) {
+		List<String> result = new ArrayList<String>();
 
-		System.out.println(info);
+		// TODO: find binded users
+		result.add("120");
+		return result;
 	}
 }

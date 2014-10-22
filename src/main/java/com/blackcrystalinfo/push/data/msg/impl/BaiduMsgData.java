@@ -57,7 +57,7 @@ public class BaiduMsgData extends AMsgData {
 		PC(2),
 
 		/**
-		 * 3：Andriod设备；
+		 * 3：Android设备；
 		 */
 		ANDROID(3),
 

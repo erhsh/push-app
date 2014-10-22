@@ -1,5 +1,6 @@
 package com.blackcrystalinfo.push.service;
 
+import com.blackcrystalinfo.push.data.IData;
 import com.blackcrystalinfo.push.message.SendMessage;
 
 public class SmsPushService extends APushService {
@@ -15,9 +16,9 @@ public class SmsPushService extends APushService {
 	}
 
 	@Override
-	protected void initData(SendMessage msg) {
+	protected IData buildData(SendMessage msg) {
 		// TODO Auto-generated method stub
-
+		return null;
 	}
 
 }
