@@ -16,6 +16,7 @@ import com.baidu.yun.channel.model.PushUnicastMessageResponse;
 import com.blackcrystalinfo.push.data.msg.AMsgData;
 import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData;
 import com.blackcrystalinfo.push.data.msg.impl.BaiduMsgData.DeviceType;
+import com.blackcrystalinfo.push.exception.PushPuserException;
 import com.blackcrystalinfo.push.pusher.msg.AMsgPusher;
 import com.blackcrystalinfo.push.utils.Constants;
 
@@ -82,11 +83,13 @@ public class BaiduMsgPusher extends AMsgPusher {
 			} catch (ChannelClientException e) {
 				// 处理客户端错误异常
 				logger.error("Channel Client Exception", e);
+				throw new PushPuserException("Client exception!!! ", e);
 			} catch (ChannelServerException e) {
 				// 处理服务端错误异常
 				logger.error(String.format(
 						"request_id: %d, error_code: %d, error_message: %s",
 						e.getRequestId(), e.getErrorCode(), e.getErrorMsg()));
+				throw new PushPuserException("Server exception!!!", e);
 			}
 
 		}

@@ -1,14 +1,18 @@
 package com.blackcrystalinfo.push.parser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.exceptions.JedisException;
 
 import com.blackcrystalinfo.push.dao.DataHelper;
+import com.blackcrystalinfo.push.exception.PushParserException;
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
@@ -47,59 +51,66 @@ public class AlarmMsgParser implements IMsgParser {
 	public List<SendMessage> parse(MessageBean rawMsg) {
 		List<SendMessage> result = new ArrayList<SendMessage>();
 
+		// check msgData
 		byte[] msgData = rawMsg.getMsgData();
+		if (null == msgData) {
+			throw new PushParserException("The msgData is empty!!!");
+		}
 
-		if (null != msgData) {
-			byte[] data = SmartHomeHead.subWebsocketHead(msgData);
-			SmartHomeData shdata = SmartHomeHead.parseData(data,
-					DATA_PARSE_PASS);
+		// decrypt msgData
+		byte[] data = null;
+		SmartHomeData shdata = null;
+		try {
+			data = SmartHomeHead.subWebsocketHead(msgData);
+			shdata = SmartHomeHead.parseData(data, DATA_PARSE_PASS);
+		} catch (Exception e) {
+			throw new PushParserException("Decrypt msgData Failed!!!");
+		}
 
-			// parse abnormal
-			if (0 != shdata.code) {
+		// parse abnormal
+		if (0 != shdata.code) {
 
-				logger.warn("Parse data abnormal, code={}", shdata.code);
+			logger.warn("Parse data abnormal, code={}", shdata.code);
 
-				SendMessage e = new SendMessage();
-				e.setTarget("120");
-				e.setTitle("Data Abnormal");
-				e.setContent("Parse code is: " + shdata.code + " --"
-						+ rawMsg.getDateTime());
-				e.setType(MsgPushTypeEnum.MSG);
-				result.add(e);
+			SendMessage e = new SendMessage();
+			e.setTarget("120");
+			e.setTitle("Data Abnormal");
+			e.setContent("Parse code is: " + shdata.code + " --"
+					+ rawMsg.getDateTime());
+			e.setType(MsgPushTypeEnum.MSG);
+			result.add(e);
 
-				return result;
-			}
+			return result;
+		}
 
-			// get device id
-			String devId = parseDevId(data);
-			if (null == devId || "".equals(devId)) {
-				String devMac = String.valueOf(shdata.mac);
-				devId = getDevId(devMac);
-			}
+		// get device id
+		String devId = parseDevId(data);
+		if (null == devId || "".equals(devId)) {
+			String devMac = String.valueOf(shdata.mac);
+			devId = getDevId(devMac);
+		}
 
-			// which is alarm
-			String devName = getDevName(devId);
+		// which is alarm
+		String devName = getDevName(devId);
 
-			// alarm what info
-			String alarmInfo = "";
-			byte[] alarmData = shdata.data;
-			if (null != data && data.length > 1) {
-				alarmInfo = getAlarmInfo(alarmData[0]);
-			}
+		// alarm what info
+		String alarmInfo = "";
+		byte[] alarmData = shdata.data;
+		if (null != data && data.length > 1) {
+			alarmInfo = getAlarmInfo(alarmData[0]);
+		}
 
-			// alarm to who
-			List<String> bindUsers = getBindUsers(devId);
+		// alarm to who
+		Set<String> bindUsers = getBindUsers(devId);
 
-			for (String bindUser : bindUsers) {
-				SendMessage sm = new SendMessage();
-				sm.setTarget(bindUser);
-				sm.setTitle(alarmInfo);
-				sm.setContent(devName + " Time: " + rawMsg.getDateTime());
-				sm.setTime(rawMsg.getDateTime());
-				sm.setType(MsgPushTypeEnum.MSG);
-				result.add(sm);
-			}
-
+		for (String bindUser : bindUsers) {
+			SendMessage sm = new SendMessage();
+			sm.setTarget(bindUser);
+			sm.setTitle(alarmInfo);
+			sm.setContent(devName + " Time: " + rawMsg.getDateTime());
+			sm.setTime(rawMsg.getDateTime());
+			sm.setType(MsgPushTypeEnum.MSG);
+			result.add(sm);
 		}
 
 		return result;
@@ -131,9 +142,20 @@ public class AlarmMsgParser implements IMsgParser {
 	private String getDevId(String devMac) {
 		String result = "";
 
-		// TODO: find id by mac
-		Jedis jedis = DataHelper.getJedis();
-		result = jedis.hget("device:mactoid", devMac);
+		Jedis jedis = null;
+		boolean isSuccess = true;
+		try {
+			jedis = DataHelper.getJedis();
+			result = jedis.hget("device:mactoid", devMac);
+		} catch (JedisException e) {
+			isSuccess = false;
+			DataHelper.returnBrokenJedis(jedis);
+			throw e;
+		} finally {
+			if (isSuccess) {
+				DataHelper.returnJedis(jedis);
+			}
+		}
 
 		return result;
 	}
@@ -148,9 +170,20 @@ public class AlarmMsgParser implements IMsgParser {
 	private String getDevName(String devId) {
 		String result = "";
 
-		// TODO: find name by id
-		Jedis jedis = DataHelper.getJedis();
-		result = jedis.hget("device:name", devId);
+		Jedis jedis = null;
+		boolean isSuccess = true;
+		try {
+			jedis = DataHelper.getJedis();
+			result = jedis.hget("device:name", devId);
+		} catch (JedisException e) {
+			isSuccess = false;
+			DataHelper.returnBrokenJedis(jedis);
+			throw e;
+		} finally {
+			if (isSuccess) {
+				DataHelper.returnJedis(jedis);
+			}
+		}
 
 		return result;
 	}
@@ -181,11 +214,24 @@ public class AlarmMsgParser implements IMsgParser {
 	 *            报警设备id
 	 * @return 绑定用户列表
 	 */
-	private List<String> getBindUsers(String devId) {
-		List<String> result = new ArrayList<String>();
+	private Set<String> getBindUsers(String devId) {
+		Set<String> result = new HashSet<String>();
 
-		// TODO: find binded users
-		result.add("120");
+		Jedis jedis = null;
+		boolean isSuccess = true;
+		try {
+			jedis = DataHelper.getJedis();
+			result = jedis.smembers("bind:device:" + devId);
+		} catch (JedisException e) {
+			isSuccess = false;
+			DataHelper.returnBrokenJedis(jedis);
+			throw e;
+		} finally {
+			if (isSuccess) {
+				DataHelper.returnJedis(jedis);
+			}
+		}
+
 		return result;
 	}
 }

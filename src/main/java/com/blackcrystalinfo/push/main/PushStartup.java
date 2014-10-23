@@ -22,6 +22,7 @@ public class PushStartup {
 			service.startServcie();
 		} catch (Exception e) {
 			logger.error("Start up push service error!!!", e);
+		} finally {
 			if (null != service) {
 				service.endService();
 			}

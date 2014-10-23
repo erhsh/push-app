@@ -1,19 +1,28 @@
 package com.blackcrystalinfo.push.test;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Test {
 
 	public static void main(String[] args) {
-		Locale locale = Locale.getDefault();
-
-		ResourceBundle bundle = ResourceBundle.getBundle("message", locale);
-
-		String msg = bundle.getString("alarm.7.infrared");
-
-		System.out.println(msg);
+		ExecutorService executorService = Executors.newCachedThreadPool();
 		
-		System.out.println("over");
+		for (int i = 0; i < 100; i++) {
+			executorService.execute(new Runnable() {
+				
+				@Override
+				public void run() {
+					System.out
+							.println("Test.main(...).new Runnable() {...}.run()");
+				}
+			});
+		}
+		
+		System.out.println("Test.main()");
+		
+		Thread t = Thread.currentThread();
+		
+		t.setDaemon(true);
 	}
 }

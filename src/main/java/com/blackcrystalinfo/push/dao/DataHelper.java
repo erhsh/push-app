@@ -3,6 +3,7 @@ package com.blackcrystalinfo.push.dao;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisException;
 
 import com.blackcrystalinfo.push.utils.Constants;
 
@@ -40,16 +41,21 @@ public class DataHelper {
 
 	public static void main(String[] args) {
 		Jedis jedis = null;
-
+		boolean success = true;
 		try {
 			jedis = DataHelper.getJedis();
+
+			jedis.set("hello", "world");
+
 			System.out.println(jedis);
-		} catch (Exception e) {
+		} catch (JedisException e) {
+			success = false;
 			if (null != jedis) {
 				DataHelper.returnBrokenJedis(jedis);
 			}
+
 		} finally {
-			if (null != jedis) {
+			if (success && null != jedis) {
 				DataHelper.returnJedis(jedis);
 				System.out.println("return ok");
 			}
