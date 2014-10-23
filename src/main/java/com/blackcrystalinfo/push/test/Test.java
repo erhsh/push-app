@@ -1,47 +1,19 @@
 package com.blackcrystalinfo.push.test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.blackcrystalinfo.push.parser.AlarmUnit;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class Test {
 
-	public static List<AlarmUnit> aus = new ArrayList<AlarmUnit>();
-	static {
-		aus.add(new AlarmUnit(0, "过压"));
-		aus.add(new AlarmUnit(1, "过流"));
-		aus.add(new AlarmUnit(2, "漏电"));
-		aus.add(new AlarmUnit(3, "过温"));
-		aus.add(new AlarmUnit(4, "气体"));
-		aus.add(new AlarmUnit(5, "水侵"));
-		aus.add(new AlarmUnit(6, "光线"));
-		aus.add(new AlarmUnit(7, "红外"));
-	}
-
 	public static void main(String[] args) {
-//		byte[] bs = new byte[4];
-		byte b = (byte) (8|3|16);
-		
-//		FileUitls.write("d:/tmp/byte", bs);
-		
-		System.out.println(parse(b));
-		
-		int a = 0xff;
-		
-		System.out.println(Integer.toBinaryString(a));
-	}
+		Locale locale = Locale.getDefault();
 
-	public static String parse(byte b) {
-		String result = "";
+		ResourceBundle bundle = ResourceBundle.getBundle("message", locale);
 
-		for (AlarmUnit au : aus) {
+		String msg = bundle.getString("alarm.7.infrared");
 
-			if ((b & au.getValue()) != 0) {
-				result += au.getName() + " ";
-			}
-		}
-
-		return result;
+		System.out.println(msg);
+		
+		System.out.println("over");
 	}
 }

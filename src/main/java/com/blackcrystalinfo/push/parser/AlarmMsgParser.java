@@ -14,6 +14,7 @@ import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeData;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeHead;
+import com.blackcrystalinfo.push.utils.locale.Messages;
 
 /**
  * 报警消息解析器
@@ -32,14 +33,14 @@ public class AlarmMsgParser implements IMsgParser {
 	static {
 		aus = new ArrayList<AlarmUnit>();
 
-		aus.add(new AlarmUnit(0, "过压"));
-		aus.add(new AlarmUnit(1, "过流"));
-		aus.add(new AlarmUnit(2, "漏电"));
-		aus.add(new AlarmUnit(3, "过温"));
-		aus.add(new AlarmUnit(4, "气体"));
-		aus.add(new AlarmUnit(5, "水侵"));
-		aus.add(new AlarmUnit(6, "光线"));
-		aus.add(new AlarmUnit(7, "红外"));
+		aus.add(new AlarmUnit(0, Messages.locale("alarm.0.press")));
+		aus.add(new AlarmUnit(1, Messages.locale("alarm.1.flow")));
+		aus.add(new AlarmUnit(2, Messages.locale("alarm.2.power")));
+		aus.add(new AlarmUnit(3, Messages.locale("alarm.3.temperature")));
+		aus.add(new AlarmUnit(4, Messages.locale("alarm.4.gas")));
+		aus.add(new AlarmUnit(5, Messages.locale("alarm.5.water")));
+		aus.add(new AlarmUnit(6, Messages.locale("alarm.6.light")));
+		aus.add(new AlarmUnit(7, Messages.locale("alarm.7.infrared")));
 	}
 
 	@Override
@@ -149,7 +150,7 @@ public class AlarmMsgParser implements IMsgParser {
 
 		// TODO: find name by id
 		Jedis jedis = DataHelper.getJedis();
-		result = jedis.hget("device:idtoname", devId);
+		result = jedis.hget("device:name", devId);
 
 		return result;
 	}

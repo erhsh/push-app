@@ -18,7 +18,6 @@ import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.AlarmMsgParser;
 import com.blackcrystalinfo.push.parser.IMsgParser;
-import com.blackcrystalinfo.push.utils.FileUitls;
 
 public class PushService implements IService {
 
@@ -71,9 +70,9 @@ public class PushService implements IService {
 
 				@Override
 				public void run() {
-					FileUitls.write("d:/rmq_data/new2/" + rawMsg.getMsgId()
-							+ "" + System.currentTimeMillis(),
-							(byte[]) rawMsg.getMsgData());
+					// FileUitls.write("d:/rmq_data/new2/" + rawMsg.getMsgId()
+					// + "" + System.currentTimeMillis(),
+					// (byte[]) rawMsg.getMsgData());
 
 					// 2 parse
 					List<SendMessage> msgs = parser.parse(rawMsg);
