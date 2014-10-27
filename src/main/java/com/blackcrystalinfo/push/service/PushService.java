@@ -101,8 +101,10 @@ public class PushService implements IService, PushServiceMBean {
 
 	@Override
 	public void endService() {
+		logger.info("================Stop Push Service===============");
 		isStart = false;
 		receiver.close();
+		executorService.shutdownNow();
 	}
 
 	@Override
