@@ -94,9 +94,12 @@ public class RmqReceiver implements IReceiver {
 			result.setMsgId(routingKey);
 			result.setMsgData(bs);
 			result.setDateTime(format.format(new Date()));
-		} catch (ShutdownSignalException | ConsumerCancelledException
-				| InterruptedException e) {
-			throw new PushReceiverException("rmq maybe down", e);
+		} catch (ShutdownSignalException e) {
+			throw new PushReceiverException("rmq down OR receiver stopped", e);
+		} catch (ConsumerCancelledException e) {
+			throw new PushReceiverException("consumer is cancelled", e);
+		} catch (InterruptedException e) {
+			throw new PushReceiverException("interrupted", e);
 		}
 		return result;
 	}

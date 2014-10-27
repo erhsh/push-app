@@ -3,6 +3,7 @@ package com.blackcrystalinfo.push.main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.blackcrystalinfo.push.service.IService;
 import com.blackcrystalinfo.push.service.PushService;
 
 /**
@@ -13,7 +14,7 @@ public class PushStartup {
 	private static final Logger logger = LoggerFactory
 			.getLogger(PushStartup.class);
 
-	private PushService service;
+	private IService service;
 
 	public void startUp() {
 

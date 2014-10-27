@@ -18,7 +18,7 @@ import com.blackcrystalinfo.push.parser.IMsgParser;
 import com.blackcrystalinfo.push.receiver.IReceiver;
 import com.blackcrystalinfo.push.receiver.impl.RmqReceiver;
 
-public class PushService implements IService {
+public class PushService implements IService, PushServiceMBean {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(PushService.class);
@@ -47,7 +47,7 @@ public class PushService implements IService {
 	}
 
 	@Override
-	public void startServcie() throws PushException {
+	public void startServcie() {
 
 		logger.info("================Start Push Service===============");
 		try {
@@ -65,6 +65,11 @@ public class PushService implements IService {
 				rawMsg = receiver.receive();
 			} catch (PushReceiverException pre) {
 				logger.error("Receive data error!!! msg={}", pre.getMessage());
+
+				if (!isStart) {
+					// 手动关闭服务
+					return;
+				}
 
 				// 重连
 				try {
@@ -98,6 +103,16 @@ public class PushService implements IService {
 	public void endService() {
 		isStart = false;
 		receiver.close();
+	}
+
+	@Override
+	public void doStart() {
+		this.startServcie();
+	}
+
+	@Override
+	public void doStop() {
+		this.endService();
 	}
 
 }
