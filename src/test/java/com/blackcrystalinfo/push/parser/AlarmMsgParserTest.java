@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.SendMessage;
+import com.blackcrystalinfo.push.parser.impl.AlarmMsgParser;
 
 public class AlarmMsgParserTest {
 
@@ -21,10 +22,16 @@ public class AlarmMsgParserTest {
 	public void testParse() {
 		MessageBean rawMsg = new MessageBean();
 
-		List<SendMessage> sendMsgs = parser.parse(rawMsg);
+		List<SendMessage> sendMsgs = null;
 
-		for (SendMessage sendMsg : sendMsgs) {
-			System.out.println(sendMsg);
+		try {
+			sendMsgs = parser.parse(rawMsg);
+
+			for (SendMessage sendMsg : sendMsgs) {
+				System.out.println(sendMsg);
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 		}
 	}
 

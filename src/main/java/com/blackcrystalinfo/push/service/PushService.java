@@ -57,46 +57,75 @@ public class PushService implements IService, PushServiceMBean {
 		}
 
 		isStart = true;
-		while (isStart) {
-			// =============================== 接收数据
-			MessageBean rawMsg = null;
+		Thread mainLoopThread = new Thread(new Runnable() {
 
-			try {
-				rawMsg = receiver.receive();
-			} catch (PushReceiverException pre) {
-				logger.error("Receive data error!!! msg={}", pre.getMessage());
-
-				if (!isStart) {
-					// 手动关闭服务
-					return;
+			@Override
+			public void run() {
+				while (isStart) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						logger.error("main looper interrupted.", e);
+					}
 				}
+				logger.info("Push service exit.");
+			}
+		});
+		mainLoopThread.setName("MainLoopThread");
+		mainLoopThread.start();
 
-				// 重连
-				try {
-					logger.info("Reconnect...");
-					receiver.connect();
-				} catch (IOException e) {
-					logger.error("Reconnect failed!!! msg={}", e.getMessage());
-				}
+		Thread receiveThread = new Thread(new Runnable() {
 
-				// 等一会儿
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
+			@Override
+			public void run() {
+				while (true) {
+					// =============================== 接收数据
+					MessageBean rawMsg = null;
+
+					try {
+						rawMsg = receiver.receive();
+					} catch (PushReceiverException pre) {
+						logger.warn("Receive data error!!! msg={}",
+								pre.getMessage());
+
+						if (!isStart) {
+							// 手动关闭服务
+							return;
+						}
+
+						// 重连
+						try {
+							logger.info("Reconnect...");
+							receiver.connect();
+						} catch (IOException e) {
+							logger.error("Reconnect failed!!! msg={}",
+									e.getMessage());
+						}
+
+						// 等一会儿
+						try {
+							Thread.sleep(2000);
+						} catch (InterruptedException e) {
+						}
+					}
+
+					// =============================== 非空判断
+					if (null == rawMsg) {
+						continue;
+					}
+					logger.info("Received messageBean: {}", rawMsg);
+
+					// =============================== 异步推送
+					PushWorker worker = new PushWorker(parser, serviceMap,
+							rawMsg);
+					executorService.execute(worker);
+
 				}
 			}
-
-			// =============================== 非空判断
-			if (null == rawMsg) {
-				continue;
-			}
-			logger.info("Received messageBean: {}", rawMsg);
-
-			// =============================== 异步推送
-			PushWorker worker = new PushWorker(parser, serviceMap, rawMsg);
-			executorService.execute(worker);
-
-		}
+		});
+		receiveThread.setName("ReceiveThread");
+		receiveThread.setDaemon(true);
+		receiveThread.start();
 	}
 
 	@Override

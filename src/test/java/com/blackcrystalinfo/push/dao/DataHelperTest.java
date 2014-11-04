@@ -36,7 +36,6 @@ public class DataHelperTest {
 			jedis = DataHelper.getJedis();
 			jedis.set("hello", "world");
 			System.out.println("ok");
-			throw new JedisException("hello exception");
 		} catch (JedisException e) {
 			System.out.println(e);
 		} finally {
@@ -51,9 +50,7 @@ public class DataHelperTest {
 			jedis = DataHelper.getJedis();
 			Set<String> value = jedis.smembers("hello");
 			System.out.println(value);
-			throw new JedisException("hello exception");
 		} catch (JedisException e) {
-			e.printStackTrace();
 			DataHelper.returnBrokenJedis(jedis);
 		}
 	}
