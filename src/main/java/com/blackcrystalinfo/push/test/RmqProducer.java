@@ -26,9 +26,9 @@ public class RmqProducer {
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
 
-		channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+		channel.queueDeclare("PushTestTopic", false, false, false, null);
 		String message = "Hello World!";
-		channel.basicPublish("MsgTopic", "myroutingkey", null, message.getBytes());
+		channel.basicPublish("PushTestTopic", "usa.weather", null, message.getBytes());
 		System.out.println(" [x] Sent '" + message + "'");
 
 		channel.close();
