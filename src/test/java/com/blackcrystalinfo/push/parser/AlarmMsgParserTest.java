@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.SendMessage;
+import com.blackcrystalinfo.push.parser.impl.AlarmMsgParser;
 
 public class AlarmMsgParserTest {
 

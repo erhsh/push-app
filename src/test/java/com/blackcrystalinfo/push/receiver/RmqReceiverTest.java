@@ -4,7 +4,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.receiver.impl.RmqReceiver;
 
 public class RmqReceiverTest {
@@ -19,8 +18,7 @@ public class RmqReceiverTest {
 
 	@Test
 	public void testReceive() {
-		MessageBean messageBean = receiver.receive();
-		System.out.println(messageBean);
+		receiver.receive();
 	}
 
 	@After

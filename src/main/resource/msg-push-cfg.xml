@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pushServiceCfg>
+	<!-- 应用消息推送 -->
+	<pushService>
+		<pushType>MSG</pushType>
+		<defaultPusher>baidu</defaultPusher>
+		<pusherMap>
+			<entry><key>baidu</key><value>com.blackcrystalinfo.push.pusher.msg.impl.BaiduMsgPushService</value></entry>
+			<entry><key>jiguang</key><value>com.blackcrystalinfo.push.pusher.msg.impl.JiguangMsgPushService</value></entry>
+			<entry><key>getui</key><value>com.blackcrystalinfo.push.pusher.msg.impl.GetuiMsgPushService</value></entry>
+		</pusherMap>
+	</pushService>
+	<!-- 手机短消息推送 -->
+	<pushService>
+		<pushType>SMS</pushType>
+		<defaultPusher>mxt</defaultPusher>
+		<pusherMap>
+			<entry><key>mxt</key><value>com.blackcrystalinfo.push.pusher.sms.impl.MxtSmsPushService</value></entry>
+		</pusherMap>
+	</pushService>
+	<!-- 邮件推送 -->
+	<pushService>
+		<pushType>ALL</pushType>
+		<defaultPusher>126</defaultPusher>
+	</pushService>
+</pushServiceCfg>

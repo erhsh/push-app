@@ -1,4 +1,4 @@
-package com.blackcrystalinfo.push.parser;
+package com.blackcrystalinfo.push.parser.impl;
 
 public class AlarmUnit {
 

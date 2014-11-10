@@ -3,37 +3,37 @@
 	<recevieQueue>
 		<queueName>push-app.alarmQueue</queueName>
 		<exchgName>MsgTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.AlarmMsgParser</msgParser>
 		<routeKey>8</routeKey>
 	</recevieQueue>
 	<recevieQueue>
 		<queueName>push-app.upgradeQueue</queueName>
 		<exchgName>MsgTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.UpgradeMsgParser</msgParser>
 		<routeKey>9</routeKey>
 	</recevieQueue>
 	<recevieQueue>
 		<queueName>push-app.usa</queueName>
 		<exchgName>PushTestTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.AlarmMsgParser</msgParser>
 		<routeKey>usa.#</routeKey>
 	</recevieQueue>
 	<recevieQueue>
 		<queueName>push-app.europe</queueName>
 		<exchgName>PushTestTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.AlarmMsgParser</msgParser>
 		<routeKey>europe.#</routeKey>
 	</recevieQueue>
 	<recevieQueue>
 		<queueName>push-app.news</queueName>
 		<exchgName>PushTestTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.AlarmMsgParser</msgParser>
 		<routeKey>#.news</routeKey>
 	</recevieQueue>
 	<recevieQueue>
 		<queueName>push-app.weather</queueName>
 		<exchgName>PushTestTopic</exchgName>
-		<msgParser>com.blackcrystalinfo.push.parser.AlarmMsgParser</msgParser>
+		<msgParser>com.blackcrystalinfo.push.parser.impl.AlarmMsgParser</msgParser>
 		<routeKey>#.weather</routeKey>
 	</recevieQueue>
 </rmqReceiveCfg>

@@ -1,14 +1,11 @@
 package com.blackcrystalinfo.push.service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.blackcrystalinfo.push.exception.PushException;
-import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.receiver.IReceiver;
 import com.blackcrystalinfo.push.receiver.impl.RmqReceiver;
 
@@ -19,19 +16,10 @@ public class PushService implements IService, PushServiceMBean {
 
 	private IReceiver receiver;
 
-	private Map<MsgPushTypeEnum, APushService> serviceMap;
-
 	private boolean isStarted = false;
 
 	public PushService() {
 		receiver = new RmqReceiver();
-
-		//
-		serviceMap = new HashMap<MsgPushTypeEnum, APushService>();
-
-		serviceMap.put(MsgPushTypeEnum.MSG, new MsgPushService("baidu"));
-		serviceMap.put(MsgPushTypeEnum.SMS, new SmsPushService("haha"));
-
 	}
 
 	@Override

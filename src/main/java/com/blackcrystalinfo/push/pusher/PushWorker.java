@@ -1,4 +1,4 @@
-package com.blackcrystalinfo.push.service;
+package com.blackcrystalinfo.push.pusher;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +12,7 @@ import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.IMsgParser;
+import com.blackcrystalinfo.push.pusher.IPushService;
 
 public class PushWorker implements Runnable {
 	private static final Logger logger = LoggerFactory
@@ -19,12 +20,12 @@ public class PushWorker implements Runnable {
 
 	private IMsgParser parser;
 
-	private Map<MsgPushTypeEnum, APushService> serviceMap;
+	private Map<MsgPushTypeEnum, IPushService> serviceMap;
 
 	private MessageBean rawMsg;
 
 	public PushWorker(IMsgParser parser,
-			Map<MsgPushTypeEnum, APushService> serviceMap, MessageBean rawMsg) {
+			Map<MsgPushTypeEnum, IPushService> serviceMap, MessageBean rawMsg) {
 
 		this.parser = parser;
 
@@ -41,16 +42,17 @@ public class PushWorker implements Runnable {
 			List<SendMessage> msgs = parser.parse(rawMsg);
 
 			if (null == msgs || msgs.isEmpty()) {
-				logger.warn("There is no binded user, rawMsg = {}", rawMsg);
+				logger.warn("Parser failed, parser = {}, rawMsg = {}", parser
+						.getClass().getSimpleName(), rawMsg);
 				return;
 			}
 
 			// push
 			for (SendMessage msg : msgs) {
-				APushService pushService = serviceMap.get(msg.getType());
+				IPushService pushService = serviceMap.get(msg.getType());
 				if (null == pushService) {
 					if (MsgPushTypeEnum.ALL == msg.getType()) {
-						for (Entry<MsgPushTypeEnum, APushService> entry : serviceMap
+						for (Entry<MsgPushTypeEnum, IPushService> entry : serviceMap
 								.entrySet()) {
 							entry.getValue().push(msg);
 						}

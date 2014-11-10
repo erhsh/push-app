@@ -8,7 +8,6 @@ import javax.xml.bind.JAXB;
 public class RmqReceiveCfg {
 
 	private static RmqReceiveCfg instance;
-	private List<RecevieQueue> recevieQueue;
 
 	public static RmqReceiveCfg getInst() {
 		if (null != instance) {
@@ -30,20 +29,14 @@ public class RmqReceiveCfg {
 		return instance;
 	}
 
+	private List<RecevieQueue> recevieQueue;
+
 	public List<RecevieQueue> getRecevieQueue() {
 		return recevieQueue;
 	}
 
 	public void setRecevieQueue(List<RecevieQueue> recevieQueue) {
 		this.recevieQueue = recevieQueue;
-	}
-
-	public String getMsgParser(String exchgName, String routeKey) {
-		return "";
-	}
-
-	public String getMsgParser(String queueName) {
-		return "";
 	}
 
 	@Override
@@ -101,8 +94,4 @@ public class RmqReceiveCfg {
 
 	}
 
-	public static void main(String[] args) {
-		RmqReceiveCfg cfg = RmqReceiveCfg.getInst();
-		System.out.println(cfg);
-	}
 }

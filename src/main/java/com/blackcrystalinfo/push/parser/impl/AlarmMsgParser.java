@@ -1,4 +1,4 @@
-package com.blackcrystalinfo.push.parser;
+package com.blackcrystalinfo.push.parser.impl;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,6 +16,7 @@ import com.blackcrystalinfo.push.exception.PushParserException;
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
+import com.blackcrystalinfo.push.parser.IMsgParser;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeData;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeHead;
 import com.blackcrystalinfo.push.utils.locale.Messages;

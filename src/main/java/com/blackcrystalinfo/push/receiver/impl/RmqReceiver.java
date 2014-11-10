@@ -15,12 +15,11 @@ import com.blackcrystalinfo.push.exception.PushReceiverException;
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.parser.IMsgParser;
+import com.blackcrystalinfo.push.pusher.IPushService;
+import com.blackcrystalinfo.push.pusher.PushWorker;
 import com.blackcrystalinfo.push.receiver.IReceiver;
+import com.blackcrystalinfo.push.receiver.impl.PushServiceCfg.PushService;
 import com.blackcrystalinfo.push.receiver.impl.RmqReceiveCfg.RecevieQueue;
-import com.blackcrystalinfo.push.service.APushService;
-import com.blackcrystalinfo.push.service.MsgPushService;
-import com.blackcrystalinfo.push.service.PushWorker;
-import com.blackcrystalinfo.push.service.SmsPushService;
 import com.blackcrystalinfo.push.utils.Constants;
 import com.blackcrystalinfo.push.utils.format.DateFormat;
 import com.blackcrystalinfo.push.utils.reflect.ReflectionUtils;
@@ -50,7 +49,7 @@ public class RmqReceiver implements IReceiver {
 
 	private Map<String, IMsgParser> parserMap;
 
-	private Map<MsgPushTypeEnum, APushService> serviceMap;
+	private Map<MsgPushTypeEnum, IPushService> serviceMap;
 
 	private ExecutorService executorService;
 
@@ -59,17 +58,60 @@ public class RmqReceiver implements IReceiver {
 	}
 
 	public RmqReceiver(String host, int port, String username, String password) {
+		logger.info("================Initialize RMQReceiver================");
+
 		factory = new ConnectionFactory();
 		factory.setHost(host);
 		factory.setPort(port);
 		factory.setUsername(username);
 		factory.setPassword(password);
 
-		//
-		serviceMap = new HashMap<MsgPushTypeEnum, APushService>();
+		// 构造推送器
+		logger.info("================init pusher...");
+		serviceMap = new HashMap<MsgPushTypeEnum, IPushService>();
+		for (PushService ps : PushServiceCfg.getInst().getPushService()) {
+			String pushType = ps.getPushType();
+			if (null == pushType || pushType.isEmpty()) {
+				logger.warn("Push type is empty, ignore it.");
+				continue;
+			}
 
-		serviceMap.put(MsgPushTypeEnum.MSG, new MsgPushService("baidu"));
-		serviceMap.put(MsgPushTypeEnum.SMS, new SmsPushService("haha"));
+			String defaultPusher = ps.getDefaultPusher();
+			if (null == defaultPusher || defaultPusher.isEmpty()) {
+				logger.warn("Default pusher for {} is empty, ignore it.",
+						pushType);
+				continue;
+			}
+
+			Map<String, String> pusherMap = ps.getPusherMap();
+			if (null == pusherMap || pusherMap.isEmpty()) {
+				logger.warn("Pusher map is empty, ignore it.");
+				continue;
+			}
+
+			String pusherClz = pusherMap.get(defaultPusher);
+			if (null == pusherClz || pusherClz.isEmpty()) {
+				logger.warn("Cannot find the default pusher, ignore it.");
+				continue;
+			}
+
+			MsgPushTypeEnum pushTypeEnum = MsgPushTypeEnum.valueOf(pushType);
+			IPushService pushService = ReflectionUtils.newInst(pusherClz);
+			serviceMap.put(pushTypeEnum, pushService);
+			logger.info("PushServiceCfg : [{}, {}]", pushTypeEnum, pushService);
+		}
+
+		logger.info("================init parser...");
+		parserMap = new HashMap<String, IMsgParser>();
+		for (RecevieQueue receiveQueue : RmqReceiveCfg.getInst()
+				.getRecevieQueue()) {
+			String queueName = receiveQueue.getQueueName();
+			String msgParser = receiveQueue.getMsgParser();
+
+			IMsgParser parser = ReflectionUtils.newInst(msgParser);
+			parserMap.put(queueName, parser);
+			logger.info("RmqReceiveCfg : [{}, {}]", queueName, parser);
+		}
 
 		executorService = Executors.newCachedThreadPool();
 	}
@@ -89,12 +131,10 @@ public class RmqReceiver implements IReceiver {
 		// 路由绑定，明确一个queue关注来自哪个exchange的哪条routing信息
 		logger.info("Create queues by RmqReceiveCfg...");
 		consumerMap = new HashMap<String, QueueingConsumer>();
-		parserMap = new HashMap<String, IMsgParser>();
 		for (RecevieQueue receiveQueue : RmqReceiveCfg.getInst()
 				.getRecevieQueue()) {
 			String queueName = receiveQueue.getQueueName();
 			String exchgName = receiveQueue.getExchgName();
-			String msgParser = receiveQueue.getMsgParser();
 
 			// 队列 and 交换机
 			logger.info("Receive queue declare [{}, {}]", queueName, exchgName);
@@ -113,20 +153,14 @@ public class RmqReceiver implements IReceiver {
 			logger.info("Create consumer...");
 			QueueingConsumer consumer = new QueueingConsumer(channel);
 			channel.basicConsume(queueName, true, consumer);
-
-			// 构造解析器
 			consumerMap.put(queueName, consumer);
-
-			IMsgParser parser = ReflectionUtils.newInst(msgParser);
-			parserMap.put(queueName, parser);
 		}
 
 		logger.info("Connect success~~~");
 	}
 
 	@Override
-	public MessageBean receive() {
-		MessageBean result = null;
+	public void receive() {
 		if (null == consumerMap) {
 			throw new PushReceiverException("Please connect RMQ server first.");
 		}
@@ -139,8 +173,6 @@ public class RmqReceiver implements IReceiver {
 			ct.setDaemon(true);
 			ct.start();
 		}
-
-		return result;
 	}
 
 	@Override
