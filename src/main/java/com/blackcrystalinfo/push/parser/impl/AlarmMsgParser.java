@@ -49,7 +49,8 @@ public class AlarmMsgParser implements IMsgParser {
 	}
 
 	@Override
-	public List<SendMessage> parse(MessageBean rawMsg) {
+	public List<SendMessage> parse(MessageBean rawMsg)
+			throws PushParserException {
 		List<SendMessage> result = new ArrayList<SendMessage>();
 
 		// check msgData
@@ -73,6 +74,7 @@ public class AlarmMsgParser implements IMsgParser {
 
 			logger.warn("Parse data abnormal, code={}", shdata.code);
 
+			// TODO: here just for test
 			SendMessage e = new SendMessage();
 			e.setTarget("120");
 			e.setTitle("Data Abnormal");

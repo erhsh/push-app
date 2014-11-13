@@ -38,7 +38,7 @@ public class BaiduMsgPusher extends AMsgPusher {
 	}
 
 	@Override
-	protected void pushMsg(AMsgData msgData) {
+	protected void pushMsg(AMsgData msgData) throws PushPuserException {
 		if (msgData instanceof BaiduMsgData) {
 			BaiduMsgData baiduMsgData = (BaiduMsgData) msgData;
 

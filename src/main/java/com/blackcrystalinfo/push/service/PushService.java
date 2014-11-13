@@ -19,21 +19,49 @@ public class PushService implements IService, PushServiceMBean {
 	private boolean isStarted = false;
 
 	public PushService() {
-		receiver = new RmqReceiver();
 	}
 
 	@Override
-	public void startServcie() {
+	public void startServcie() throws PushException {
 
-		logger.info("================Start Push Service===============");
 		try {
+			logger.info("----------------Starting Push Service----------------");
+
+			receiver = new RmqReceiver();
 			receiver.connect();
 			receiver.receive();
-		} catch (IOException e) {
-			throw new PushException("Connect RMQ Server error!!!", e);
+
+			isStarted = true;
+
+			runConnLoopChecker();
+
+			logger.info("----------------Started Push Service ----------------");
+		} catch (Exception e) {
+			logger.error("Start Push Service error", e);
+			throw new PushException(e);
 		}
 
-		isStarted = true;
+	}
+
+	@Override
+	public void endService() {
+		logger.info("----------------Stopping Push Service----------------");
+		isStarted = false;
+		receiver.close();
+		logger.info("----------------Stopped Push Service ----------------");
+	}
+
+	@Override
+	public void doStart() {
+		this.startServcie();
+	}
+
+	@Override
+	public void doStop() {
+		this.endService();
+	}
+
+	private void runConnLoopChecker() {
 		Thread mainLoopThread = new Thread(new Runnable() {
 
 			@Override
@@ -71,28 +99,11 @@ public class PushService implements IService, PushServiceMBean {
 					}
 
 				}
-				logger.info("Push service exit.");
+				logger.info("ConnLoopChecker exit.");
 			}
 		});
 		mainLoopThread.setName("MainLoopThread");
 		mainLoopThread.start();
-	}
-
-	@Override
-	public void endService() {
-		logger.info("================Stop Push Service===============");
-		isStarted = false;
-		receiver.close();
-	}
-
-	@Override
-	public void doStart() {
-		this.startServcie();
-	}
-
-	@Override
-	public void doStop() {
-		this.endService();
 	}
 
 }

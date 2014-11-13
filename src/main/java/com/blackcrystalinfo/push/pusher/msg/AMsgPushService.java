@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.blackcrystalinfo.push.data.IData;
+import com.blackcrystalinfo.push.exception.PushPuserException;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.pusher.IPushService;
 import com.blackcrystalinfo.push.pusher.IPusher;
@@ -19,7 +20,7 @@ public abstract class AMsgPushService implements IPushService {
 	}
 
 	@Override
-	public void push(SendMessage msg) {
+	public void push(SendMessage msg) throws PushPuserException {
 		if (null == pusher) {
 			logger.warn("Please init msg puser first!!!");
 			return;

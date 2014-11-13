@@ -3,6 +3,7 @@ package com.blackcrystalinfo.push.receiver.impl;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -11,12 +12,13 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.blackcrystalinfo.push.exception.PushException;
 import com.blackcrystalinfo.push.exception.PushReceiverException;
 import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
+import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.IMsgParser;
 import com.blackcrystalinfo.push.pusher.IPushService;
-import com.blackcrystalinfo.push.pusher.PushWorker;
 import com.blackcrystalinfo.push.receiver.IReceiver;
 import com.blackcrystalinfo.push.receiver.impl.PushServiceCfg.PushService;
 import com.blackcrystalinfo.push.receiver.impl.RmqReceiveCfg.RecevieQueue;
@@ -49,7 +51,7 @@ public class RmqReceiver implements IReceiver {
 
 	private Map<String, IMsgParser> parserMap;
 
-	private Map<MsgPushTypeEnum, IPushService> serviceMap;
+	private Map<MsgPushTypeEnum, IPushService> pushServiceMap;
 
 	private ExecutorService executorService;
 
@@ -68,7 +70,7 @@ public class RmqReceiver implements IReceiver {
 
 		// 构造推送器
 		logger.info("================init pusher...");
-		serviceMap = new HashMap<MsgPushTypeEnum, IPushService>();
+		pushServiceMap = new HashMap<MsgPushTypeEnum, IPushService>();
 		for (PushService ps : PushServiceCfg.getInst().getPushService()) {
 			String pushType = ps.getPushType();
 			if (null == pushType || pushType.isEmpty()) {
@@ -97,7 +99,7 @@ public class RmqReceiver implements IReceiver {
 
 			MsgPushTypeEnum pushTypeEnum = MsgPushTypeEnum.valueOf(pushType);
 			IPushService pushService = ReflectionUtils.newInst(pusherClz);
-			serviceMap.put(pushTypeEnum, pushService);
+			pushServiceMap.put(pushTypeEnum, pushService);
 			logger.info("PushServiceCfg : [{}, {}]", pushTypeEnum, pushService);
 		}
 
@@ -160,7 +162,7 @@ public class RmqReceiver implements IReceiver {
 	}
 
 	@Override
-	public void receive() {
+	public void receive() throws PushReceiverException {
 		if (null == consumerMap) {
 			throw new PushReceiverException("Please connect RMQ server first.");
 		}
@@ -168,7 +170,8 @@ public class RmqReceiver implements IReceiver {
 		for (Entry<String, QueueingConsumer> entry : consumerMap.entrySet()) {
 			String queueName = entry.getKey();
 			QueueingConsumer consumer = entry.getValue();
-			ConsumerThread ct = new ConsumerThread(queueName, consumer);
+			ConsumerThread ct = new ConsumerThread(consumer,
+					parserMap.get(queueName));
 			ct.setName("QueueConsumerThread-" + queueName);
 			ct.setDaemon(true);
 			ct.start();
@@ -195,12 +198,13 @@ public class RmqReceiver implements IReceiver {
 
 	class ConsumerThread extends Thread {
 
-		private String queueName;
 		private QueueingConsumer consumer;
 
-		public ConsumerThread(String queueName, QueueingConsumer consumer) {
-			this.queueName = queueName;
+		private IMsgParser parser;
+
+		public ConsumerThread(QueueingConsumer consumer, IMsgParser parser) {
 			this.consumer = consumer;
+			this.parser = parser;
 		}
 
 		@Override
@@ -220,8 +224,8 @@ public class RmqReceiver implements IReceiver {
 					rawMsg.setMsgData(bs);
 					rawMsg.setDateTime(format.format(new Date()));
 
-					PushWorker worker = new PushWorker(
-							parserMap.get(queueName), serviceMap, rawMsg);
+					PushWorker worker = new PushWorker(parser, pushServiceMap,
+							rawMsg);
 					executorService.execute(worker);
 
 				}
@@ -230,6 +234,60 @@ public class RmqReceiver implements IReceiver {
 			}
 
 		}
+	}
+
+	class PushWorker implements Runnable {
+
+		private IMsgParser parser;
+
+		private Map<MsgPushTypeEnum, IPushService> serviceMap;
+
+		private MessageBean rawMsg;
+
+		public PushWorker(IMsgParser parser,
+				Map<MsgPushTypeEnum, IPushService> serviceMap,
+				MessageBean rawMsg) {
+
+			this.parser = parser;
+
+			this.serviceMap = serviceMap;
+
+			this.rawMsg = rawMsg;
+		}
+
+		@Override
+		public void run() {
+
+			try {
+				// parse
+				List<SendMessage> msgs = parser.parse(rawMsg);
+
+				if (null == msgs || msgs.isEmpty()) {
+					logger.warn("Parser failed, parser = {}, rawMsg = {}",
+							parser.getClass().getSimpleName(), rawMsg);
+					return;
+				}
+
+				// push
+				for (SendMessage msg : msgs) {
+					IPushService pushService = serviceMap.get(msg.getType());
+					if (null == pushService) {
+						if (MsgPushTypeEnum.ALL == msg.getType()) {
+							for (Entry<MsgPushTypeEnum, IPushService> entry : serviceMap
+									.entrySet()) {
+								entry.getValue().push(msg);
+							}
+						}
+					} else {
+						pushService.push(msg);
+					}
+				}
+			} catch (PushException e) {
+				logger.error("Failed to push rawMsg = " + rawMsg, e);
+			}
+
+		}
+
 	}
 
 }

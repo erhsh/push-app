@@ -2,6 +2,7 @@ package com.blackcrystalinfo.push.pusher.msg;
 
 import com.blackcrystalinfo.push.data.IData;
 import com.blackcrystalinfo.push.data.msg.AMsgData;
+import com.blackcrystalinfo.push.exception.PushPuserException;
 import com.blackcrystalinfo.push.pusher.IPusher;
 
 /**
@@ -13,12 +14,12 @@ import com.blackcrystalinfo.push.pusher.IPusher;
 public abstract class AMsgPusher implements IPusher {
 
 	@Override
-	public void push(IData data) {
+	public void push(IData data) throws PushPuserException {
 		if (data instanceof AMsgData) {
 			AMsgData msgData = (AMsgData) data;
 			pushMsg(msgData);
 		}
 	}
 
-	protected abstract void pushMsg(AMsgData msgData);
+	protected abstract void pushMsg(AMsgData msgData) throws PushPuserException;
 }
