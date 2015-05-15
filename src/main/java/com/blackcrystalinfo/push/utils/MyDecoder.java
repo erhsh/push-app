@@ -3,6 +3,10 @@ package com.blackcrystalinfo.push.utils;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
+import sun.misc.BASE64Encoder;
 
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeData;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeHead;
@@ -39,6 +43,18 @@ public class MyDecoder {
 			System.out.println("data: "
 					+ (shd.data == null ? null : new String(shd.data)));
 
+			String mac = Long.toHexString(shd.srcID);
+			System.out.println(mac);
+
+			ByteBuffer bb = ByteBuffer.allocate(8).order(
+					ByteOrder.LITTLE_ENDIAN);
+			bb.putLong(shd.srcID);
+
+			byte[] macBytes = bb.array();
+
+			BASE64Encoder encoder = new BASE64Encoder();
+			String str = encoder.encode(macBytes);
+			System.out.println(str);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -55,7 +71,7 @@ public class MyDecoder {
 	public static void main(String[] args) {
 		// new MyDecoder().decode("d:/rmq_data/new/3");
 		// new MyDecoder().decode("d:/rmq_data/new/4_1413361594445");
-		new MyDecoder().decode("d:/rmq_data/new3/81413793474532");
+		new MyDecoder().decode("D:/tmp/alarmData/1417059114228");
 		// new MyDecoder().decode("d:/rmq_data/new/5_1413362888330");
 		// new MyDecoder().decode("d:/rmq_data/new/18");
 		// new MyDecoder().decode("d:/rmq_data/new/20");

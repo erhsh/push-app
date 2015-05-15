@@ -1,5 +1,7 @@
 package com.blackcrystalinfo.push.parser.impl;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +19,7 @@ import com.blackcrystalinfo.push.message.MessageBean;
 import com.blackcrystalinfo.push.message.MsgPushTypeEnum;
 import com.blackcrystalinfo.push.message.SendMessage;
 import com.blackcrystalinfo.push.parser.IMsgParser;
+import com.blackcrystalinfo.push.utils.FileUitls;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeData;
 import com.blackcrystalinfo.push.utils.decoder.SmartHomeHead;
 import com.blackcrystalinfo.push.utils.locale.Messages;
@@ -48,6 +51,9 @@ public class AlarmMsgParser implements IMsgParser {
 		aus.add(new AlarmUnit(7, Messages.locale("alarm.7.infrared")));
 	}
 
+	@SuppressWarnings("restriction")
+	private sun.misc.BASE64Encoder encoder = new sun.misc.BASE64Encoder();
+
 	@Override
 	public List<SendMessage> parse(MessageBean rawMsg)
 			throws PushParserException {
@@ -63,6 +69,8 @@ public class AlarmMsgParser implements IMsgParser {
 		byte[] data = null;
 		SmartHomeData shdata = null;
 		try {
+			FileUitls.write("d:/tmp/alarmData/" + System.currentTimeMillis(),
+					msgData);
 			data = SmartHomeHead.subWebsocketHead(msgData);
 			shdata = SmartHomeHead.parseData(data, DATA_PARSE_PASS);
 		} catch (Exception e) {
@@ -88,8 +96,14 @@ public class AlarmMsgParser implements IMsgParser {
 
 		// get device id
 		String devId = parseDevId(data);
-		if (null == devId || "".equals(devId)) {
-			String devMac = String.valueOf(shdata.mac);
+		if (null == devId || devId.isEmpty()) {
+			String devMac = getDevMacStr(shdata.srcID);
+
+			if (null == devMac || devMac.isEmpty()) {
+				logger.warn("Device mac is empty. srcId is {}", shdata.srcID);
+				return result;
+			}
+
 			devId = getDevId(devMac);
 		}
 
@@ -99,13 +113,16 @@ public class AlarmMsgParser implements IMsgParser {
 		// alarm what info
 		String alarmInfo = "";
 		byte[] alarmData = shdata.data;
-		if (null != data && data.length > 1) {
+		if (null != alarmData && alarmData.length > 1) {
 			alarmInfo = getAlarmInfo(alarmData[0]);
 		}
 
 		// alarm to who
 		Set<String> bindUsers = getBindUsers(devId);
 
+		// devName = devName.isEmpty() ? "default" : devName;
+		// bindUsers.add("120");
+		// bindUsers.add("64");
 		for (String bindUser : bindUsers) {
 			SendMessage sm = new SendMessage();
 			sm.setTarget(bindUser);
@@ -150,6 +167,10 @@ public class AlarmMsgParser implements IMsgParser {
 		try {
 			jedis = DataHelper.getJedis();
 			result = jedis.hget("device:mactoid", devMac);
+
+			if (null == result || result.isEmpty()) {
+				logger.error("Cannot find device by mac, mac is: {}", devMac);
+			}
 		} catch (JedisException e) {
 			isSuccess = false;
 			DataHelper.returnBrokenJedis(jedis);
@@ -177,6 +198,10 @@ public class AlarmMsgParser implements IMsgParser {
 		boolean isSuccess = true;
 		try {
 			jedis = DataHelper.getJedis();
+
+			if (null == devId) {
+				return result;
+			}
 			result = jedis.hget("device:name", devId);
 		} catch (JedisException e) {
 			isSuccess = false;
@@ -234,6 +259,27 @@ public class AlarmMsgParser implements IMsgParser {
 				DataHelper.returnJedis(jedis);
 			}
 		}
+
+		return result;
+	}
+
+	/**
+	 * 把long类型的mac地址转化为经过bas64编码处理的
+	 * 
+	 * @param mac
+	 *            long
+	 * @return String
+	 */
+	@SuppressWarnings("restriction")
+	private String getDevMacStr(long mac) {
+		String result = "";
+
+		ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
+		bb.putLong(0, mac);
+		byte[] bs = bb.array();
+
+		result = encoder.encode(bs);
+		result = result.replace('+', ' ');
 
 		return result;
 	}
